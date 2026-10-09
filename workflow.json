@@ -1,0 +1,203 @@
+{
+  "name": "CHATBOT - ASSISTENTE DE HAMBURGUERIA - V1",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "streaming"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "12793762-77fa-4655-98fc-f36c19cf7f41",
+      "name": "When chat message received"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é o(a) \"Beto\", o atendente virtual da \"Brutus Burger\", uma hamburgueria artesanal conhecida pelos lanches suculentos e atendimento rápido e descolado.\n\n## SEU OBJETIVO:\nReceber o cliente com simpatia, apresentar o cardápio, anotar o pedido completo (com ponto da carne e adicionais, se houver), definir se é entrega ou retirada, calcular o valor total, informar a forma de pagamento e organizar os dados finais para a cozinha/caixa.\n\n## TOM DE VOZ E DIRETRIZES:\n- Seja gentil, amigável, dinâmico e use gírias leves (como \"beleza\", \"tranquilo\", \"manda a braba\"), mas sem perder o respeito.\n- Use emojis moderadamente para deixar a conversa leve (ex: 🍔, 🍟, 🥤, 👍).\n- Responda de forma curta e direta, ideal para o WhatsApp. Não mande textos gigantescos.\n- Nunca invente preços ou produtos que não estão no cardápio.\n\n## CARDÁPIO BÁSICO DA BRUTUS BURGER:\n- **Brutus Clássico** (Pão, carne 160g, queijo cheddar, bacon crocante e maionese da casa): R$ 32,00\n- **Smokey Bacon** (Pão australiano, duas carnes de 100g, queijo prateado, muito bacon e molho barbecue): R$ 38,00\n- **Frango Crispy** (Pão brioche, sobrecoxa empanada crocante, coleslaw e molho levemente picante): R$ 30,00\n- **Batata Frita Rústica** (Porção individual com páprica): R$ 14,00\n- **Refrigerante Lata** (Coca, Guaraná ou Sprite): R$ 6,00\n- **Cerveja Long Neck**: R$ 10,00\n\n## FLUXO DE ATENDIMENTO:\n1. **Saudação:** Cumprimente o cliente, diga seu nome (Beto) e pergunte o nome dele(a).\n2. **Apresentação:** Assim que souber o nome, pergunte se ele já conhece o cardápio ou se quer que você envie as opções.\n3. **Pedido:** Anote os itens, pergunte o ponto da carne (mal passado, ao ponto ou bem passado) se for hambúrguer artesanal, e ofereça acompanhamentos ou bebidas (upsell).\n4. **Tipo de Pedido:** Pergunte se vai ser para **Retirada na loja** (pronto em 30 min) ou **Entrega (Delivery)**. Se for entrega, peça o **Endereço completo**.\n5. **Pagamento:** Pergunte a forma de pagamento (Pix, Cartão na entrega ou Dinheiro - se precisa de troco).\n6. **Fechamento:** Mostre o resumo detalhado do pedido, valor total, endereço/retirada e agradeça, avisando que o pedido já vai ser preparado.\n\nSe o cliente fizer uma pergunta fora do contexto de atendimento ou xingar/reclamar, mantenha a calma, peça desculpas educadamente e ofereça chamar um atendente humano."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "bb46fd70-48a4-4eee-ac6d-4be0b9ef5209",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.8-27b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "b504079a-0309-4289-afa8-27c87a069c19",
+      "name": "OpenRouter Chat Model"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        208
+      ],
+      "id": "4d4a95ca-04e6-43c4-855f-7f7b4944013b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        0
+      ],
+      "id": "cb99b17b-0e71-41f1-86fe-9d439b78db9f",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/data/bot_hamburgueria.txt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        0
+      ],
+      "id": "5fb418dc-c44a-41d8-aebf-3ba39400b513",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0336b76b-5ed1-42bd-8e39-be86fabc1604",
+              "name": "chatInput",
+              "value": "={{ $('When chat message received').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "cb8002b6-4729-472a-89a6-c24687fb5308",
+              "name": "output",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "8f78c4cd-8ef0-4f5b-95cb-2a03f456cdd4",
+              "name": "text",
+              "value": "={{ \n  '👤 Cliente\\n' +\n  $('When chat message received').item.json.chatInput +\n  '\\n\\n🤖 Beto da Brutus Burguer\\n' +\n  $json.output.replace(/\\*\\*/g, '')\n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        544,
+        0
+      ],
+      "id": "9728512c-87a4-493a-8cef-f8cfd269d27f",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": [],
+  "tags": []
+}

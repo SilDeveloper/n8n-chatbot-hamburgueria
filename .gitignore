@@ -1,0 +1,14 @@
+# Segredos locais
+.env
+.env.*
+!.env.example
+
+# Dados e arquivos locais
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.n8n/
+venv/
+.venv/
+__pycache__/
